@@ -116,8 +116,17 @@ func NewClient(dsn string) (client *Client, err error) {
 		return nil
 	}
 
-	httpClient := &http.Client{nil, check, nil}
-	return &Client{URL: u, PublicKey: publicKey, SecretKey: secretKey, httpClient: httpClient, Project: project}, nil
+	return &Client{
+		URL:       u,
+		PublicKey: publicKey,
+		SecretKey: secretKey,
+		httpClient: &http.Client{
+			Transport:     nil,
+			CheckRedirect: check,
+			Jar:           nil,
+		},
+		Project: project,
+	}, nil
 }
 
 // CaptureMessage sends a message to the Sentry server. The resulting string is an event identifier.
