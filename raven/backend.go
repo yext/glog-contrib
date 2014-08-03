@@ -24,11 +24,12 @@ func init() {
 // sent to sentry they are tagged as coming from the given
 // project. It then sets up the connection to sentry and begins
 // to send any errors recieved over comm to sentry.
-func CaptureErrors(project, dsn string, comm <-chan glog.Event) error {
+// It panics if a client could be initialized.
+func CaptureErrors(project, dsn string, comm <-chan glog.Event) {
 	projectName = project
 	client, err := NewClient(dsn)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
 	for e := range comm {
@@ -36,7 +37,6 @@ func CaptureErrors(project, dsn string, comm <-chan glog.Event) error {
 			client.Capture(fromGlogEvent(e))
 		}
 	}
-	return nil
 }
 
 // fromGlogEvent converts a glog.Event to the format expected by Sentry.
