@@ -53,6 +53,7 @@ func fromGlogEvent(e glog.Event) *Event {
 		ServerName: hostname,
 		Extra:      make(map[string]interface{}),
 		StackTrace: BuildStackTrace(e.StackTrace),
+		Logger:	    os.Args[0],
 	}
 
 	if line := strings.Index(eve.Message, "\n"); line != -1 {
