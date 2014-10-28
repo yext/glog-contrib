@@ -3,6 +3,7 @@ package raven
 import (
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/yext/glog"
@@ -11,6 +12,7 @@ import (
 var (
 	projectName string
 	hostname    string
+	re          *regexp.Regexp
 )
 
 func init() {
@@ -18,6 +20,7 @@ func init() {
 	if short := strings.Index(hostname, "."); short != -1 {
 		hostname = hostname[:short]
 	}
+	re = regexp.MustCompile("[0-9]{2,}")
 }
 
 // CaptureErrors sets the name of the project so that when events are
@@ -39,6 +42,13 @@ func CaptureErrors(project, dsn string, comm <-chan glog.Event) {
 	}
 }
 
+func separateMessageAndIds(message string) (string, string) {
+	msg := re.ReplaceAllString(message, "[ID]")
+	numbers := re.FindAllString(message, -1)
+	ids := strings.Join(numbers, " ")
+	return msg, ids
+}
+
 // fromGlogEvent converts a glog.Event to the format expected by Sentry.
 func fromGlogEvent(e glog.Event) *Event {
 	message := string(e.Message)
@@ -46,14 +56,16 @@ func fromGlogEvent(e glog.Event) *Event {
 		message = message[square+1:]
 	}
 
+	msg, ids := separateMessageAndIds(message)
+
 	eve := &Event{
 		Project:    projectName,
 		Level:      e.Severity,
-		Message:    message,
+		Message:    msg,
 		ServerName: hostname,
 		Extra:      make(map[string]interface{}),
 		StackTrace: BuildStackTrace(e.StackTrace),
-		Logger:	    os.Args[0],
+		Logger:     os.Args[0],
 	}
 
 	if line := strings.Index(eve.Message, "\n"); line != -1 {
@@ -71,6 +83,9 @@ func fromGlogEvent(e glog.Event) *Event {
 	}
 
 	eve.Extra["Source"] = sourceFromStack(eve.StackTrace)
+	if ids != "" {
+		eve.Extra["IDs"] = ids
+	}
 
 	return eve
 }
