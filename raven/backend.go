@@ -56,6 +56,11 @@ func fromGlogEvent(e glog.Event) *Event {
 		message = message[square+1:]
 	}
 
+	fullMessage := message
+	if line := strings.Index(message, "\n"); line != -1 {
+		message = message[:line]
+	}
+
 	msg, ids := separateMessageAndIds(message)
 
 	eve := &Event{
@@ -63,13 +68,9 @@ func fromGlogEvent(e glog.Event) *Event {
 		Level:      e.Severity,
 		Message:    msg,
 		ServerName: hostname,
-		Extra:      make(map[string]interface{}),
+		Extra:      map[string]interface{}{"FullMessage": fullMessage},
 		StackTrace: BuildStackTrace(e.StackTrace),
 		Logger:     os.Args[0],
-	}
-
-	if line := strings.Index(eve.Message, "\n"); line != -1 {
-		eve.Message = eve.Message[:line]
 	}
 
 	for _, d := range e.Data {
