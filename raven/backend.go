@@ -76,8 +76,13 @@ func fromGlogEvent(e glog.Event) *Event {
 	for _, d := range e.Data {
 		switch t := d.(type) {
 		case *http.Request:
-			eve.Http = NewHttp(t)
-			break
+			if eve.Http == nil {
+				eve.Http = NewHttp(t)
+			}
+		case map[string]interface{}:
+			for k, v := range t {
+				data[k] = v
+			}
 		default:
 			//TODO(ltacon): ignore for now...
 		}
