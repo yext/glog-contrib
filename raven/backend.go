@@ -73,12 +73,11 @@ func fromGlogEvent(e glog.Event) *Event {
 		Logger:     os.Args[0],
 	}
 
+	data := map[string]interface{}{}
 	for _, d := range e.Data {
 		switch t := d.(type) {
 		case *http.Request:
-			if eve.Http == nil {
-				eve.Http = NewHttp(t)
-			}
+			eve.Http = NewHttp(t)
 		case map[string]interface{}:
 			for k, v := range t {
 				data[k] = v
@@ -88,6 +87,7 @@ func fromGlogEvent(e glog.Event) *Event {
 		}
 	}
 
+	eve.Extra["Data"] = data
 	eve.Extra["Source"] = sourceFromStack(eve.StackTrace)
 	if ids != "" {
 		eve.Extra["IDs"] = ids
