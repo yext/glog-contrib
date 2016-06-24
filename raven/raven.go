@@ -32,6 +32,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"strings"
 	"time"
@@ -43,6 +44,7 @@ type Client struct {
 	SecretKey  string
 	Project    string
 	httpClient *http.Client
+	Tags       map[string]string
 }
 
 type StackTrace struct {
@@ -74,6 +76,7 @@ type Event struct {
 	StackTrace StackTrace             `json:"stacktrace"`
 	Http       *Http                  `json:"request"`
 	Extra      map[string]interface{} `json:"extra"`
+	Tags       map[string]string      `json:"tags"`
 }
 
 type sentryResponse struct {
@@ -115,6 +118,12 @@ func NewClient(dsn string) (client *Client, err error) {
 		fmt.Printf("%+v", req)
 		return nil
 	}
+	m := make(map[string]string)
+	if os.Getenv("KHAN_JOB_NAME") != "" {
+		m["job_name"] = strings.ToLower(os.Getenv("KHAN_JOB_NAME"))
+	} else {
+		m["job_name"] = "unknown"
+	}
 
 	return &Client{
 		URL:       u,
@@ -126,6 +135,7 @@ func NewClient(dsn string) (client *Client, err error) {
 			Jar:           nil,
 		},
 		Project: project,
+		Tags:    m,
 	}, nil
 }
 
@@ -166,6 +176,18 @@ func (client Client) Capture(ev *Event) error {
 	if ev.Timestamp == "" {
 		now := time.Now().UTC()
 		ev.Timestamp = now.Format(iso8601)
+	}
+
+	if ev.Tags == nil {
+		ev.Tags = client.Tags
+	} else {
+		// Include any tags from the client
+		for key, val := range client.Tags {
+			_, exists := ev.Tags[key]
+			if !exists {
+				ev.Tags[key] = val
+			}
+		}
 	}
 
 	// Send
