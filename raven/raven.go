@@ -30,12 +30,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
 	"path"
 	"strings"
 	"time"
+
+	"github.com/yext/glog"
 )
 
 type Client struct {
@@ -154,6 +157,13 @@ func (client Client) CaptureMessage(message ...string) (result string, err error
 // formatting the message
 func (client Client) CaptureMessagef(format string, a ...interface{}) (result string, err error) {
 	return client.CaptureMessage(fmt.Sprintf(format, a))
+}
+
+func (client Client) CaptureGlogEvent(ev glog.Event) {
+	if err := client.Capture(fromGlogEvent(ev)); err != nil {
+		// Don't use glog, or we'll just end up in an infinite loop
+		log.Printf("An error occurred while attempting to send an error to Sentry:\n%v", err)
+	}
 }
 
 // Sends the given event to the sentry servers after encoding it into a byte slice.

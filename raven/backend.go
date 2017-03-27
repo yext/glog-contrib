@@ -1,7 +1,6 @@
 package raven
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"regexp"
@@ -38,10 +37,7 @@ func CaptureErrors(project, dsn string, comm <-chan glog.Event) {
 
 	for e := range comm {
 		if e.Severity == "ERROR" {
-			if err := client.Capture(fromGlogEvent(e)); err != nil {
-				// Don't use glog, or we'll just end up in an infinite loop
-				log.Printf("An error occurred while attempting to send an error to Sentry:\n%v", err)
-			}
+			client.CaptureGlogEvent(e)
 		}
 	}
 }
