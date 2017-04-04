@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/yext/glog"
+	"github.com/yext/glog-contrib/stacktrace"
 )
 
 var (
@@ -69,7 +70,7 @@ func fromGlogEvent(e glog.Event) *Event {
 		Message:    msg,
 		ServerName: hostname,
 		Extra:      map[string]interface{}{"FullMessage": fullMessage},
-		StackTrace: BuildStackTrace(e.StackTrace),
+		StackTrace: stacktrace.Build(e.StackTrace),
 		Logger:     os.Args[0],
 	}
 
@@ -98,7 +99,7 @@ func fromGlogEvent(e glog.Event) *Event {
 
 // sourceFromStack retrieves the function and line where the
 // event was logged from in the format "file.Function:118".
-func sourceFromStack(s StackTrace) string {
+func sourceFromStack(s stacktrace.StackTrace) string {
 	if len(s.Frames) == 0 {
 		return ""
 	}
