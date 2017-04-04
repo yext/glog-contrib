@@ -39,6 +39,7 @@ import (
 	"time"
 
 	"github.com/yext/glog"
+	"github.com/yext/glog-contrib/stacktrace"
 )
 
 type Client struct {
@@ -48,15 +49,6 @@ type Client struct {
 	Project    string
 	httpClient *http.Client
 	Tags       map[string]string
-}
-
-type StackTrace struct {
-	Frames []StackFrame `json:"frames"`
-}
-
-type StackFrame struct {
-	Function string `json:"function"`
-	LineNo   string `json:"lineno"`
 }
 
 type Http struct {
@@ -76,7 +68,7 @@ type Event struct {
 	Level      string                 `json:"level"`
 	Logger     string                 `json:"logger"`
 	ServerName string                 `json:"server_name"`
-	StackTrace StackTrace             `json:"stacktrace"`
+	StackTrace stacktrace.StackTrace  `json:"stacktrace"`
 	Http       *Http                  `json:"request"`
 	Extra      map[string]interface{} `json:"extra"`
 	Tags       map[string]string      `json:"tags"`

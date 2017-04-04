@@ -7,6 +7,8 @@ import (
 	"net/http"
 	"runtime"
 	"strings"
+
+	"github.com/yext/glog-contrib/stacktrace"
 )
 
 func NewEvent(req *http.Request, message string, depth int) *Event {
@@ -22,7 +24,7 @@ func NewEvent(req *http.Request, message string, depth int) *Event {
 	return &Event{
 		Message:    message,
 		Level:      "ERROR",
-		StackTrace: BuildStackTrace(callers[:written]),
+		StackTrace: stacktrace.Build(callers[:written]),
 		Http:       NewHttp(req),
 	}
 }

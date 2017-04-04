@@ -1,11 +1,20 @@
-package raven
+package stacktrace
 
 import (
 	"runtime"
 	"strconv"
 )
 
-func BuildStackTrace(stack []uintptr) StackTrace {
+type StackTrace struct {
+	Frames []StackFrame `json:"frames"`
+}
+
+type StackFrame struct {
+	Function string `json:"function"`
+	LineNo   string `json:"lineno"`
+}
+
+func Build(stack []uintptr) StackTrace {
 	var ravenStackTrace = make([]StackFrame, len(stack))
 	for i, ptr := range stack {
 		var (
