@@ -28,7 +28,7 @@ func init() {
 // sent to sentry they are tagged as coming from the given
 // project. It then sets up the connection to sentry and begins
 // to send any errors recieved over comm to sentry.
-// It panics if a client could be initialized.
+// It panics if a client could not be initialized.
 func CaptureErrors(project, dsn string, comm <-chan glog.Event) {
 	projectName = project
 	client, err := NewClient(dsn)
@@ -36,9 +36,49 @@ func CaptureErrors(project, dsn string, comm <-chan glog.Event) {
 		panic(err)
 	}
 
-	for e := range comm {
-		if e.Severity == "ERROR" {
-			client.CaptureGlogEvent(e)
+	for glogEve := range comm {
+		if glogEve.Severity == "ERROR" {
+			client.CaptureGlogEvent(glogEve)
+		}
+	}
+}
+
+// CaptureErrorsAltDsn allows you to have errors sent to one of multiple dsn targes.
+// It sets up a connection to sentry for each of the given dsn URIs.
+//
+// To tag an event with a dsn:
+//     glog.Error("bad thing happened", raven.AltDsn(YOUR_DSN))
+//
+// If the dsn of an event is not specificed or is not equal to any of the
+// dsns arg, the dsn target will be assumed to be the first dsn in the dsns list.
+func CaptureErrorsAltDsn(project string, dsns []string, comm <-chan glog.Event) {
+	if len(dsns) == 0 {
+		panic("must specify at least one dsn")
+	}
+	projectName = project
+
+	var primaryClient *Client
+	dsnClients := make(map[string]*Client)
+	for _, dsn := range dsns {
+		client, err := NewClient(dsn)
+		if err != nil {
+			panic(err)
+		}
+		if primaryClient == nil {
+			primaryClient = client
+		}
+		dsnClients[dsn] = client
+	}
+
+	for glogEve := range comm {
+		if glogEve.Severity == "ERROR" {
+			e := fromGlogEvent(glogEve)
+			eventDsnTarget := e.TargetDsn
+			if client, ok := dsnClients[eventDsnTarget]; ok {
+				client.Capture(e)
+			} else {
+				primaryClient.Capture(e)
+			}
 		}
 	}
 }
@@ -77,6 +117,8 @@ func fromGlogEvent(e glog.Event) *Event {
 	data := map[string]interface{}{}
 	for _, d := range e.Data {
 		switch t := d.(type) {
+		case altDsn:
+			eve.TargetDsn = d.(string)
 		case *http.Request:
 			eve.Http = NewHttp(t)
 		case map[string]interface{}:
