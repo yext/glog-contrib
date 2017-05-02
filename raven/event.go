@@ -40,6 +40,12 @@ func NewHttp(req *http.Request) *Http {
 	}
 }
 
+type altDsn string
+
+func AltDsn(dsn string) interface{} {
+	return altDsn(dsn)
+}
+
 func sentryHeaders(headers map[string][]string) map[string]string {
 	var m = map[string]string{}
 	for k, v := range headers {

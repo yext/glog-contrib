@@ -70,6 +70,7 @@ type Event struct {
 	ServerName string                 `json:"server_name"`
 	StackTrace stacktrace.StackTrace  `json:"stacktrace"`
 	Http       *Http                  `json:"request"`
+	TargetDsn  string                 `json:"targetDsn"`
 	Extra      map[string]interface{} `json:"extra"`
 	Tags       map[string]string      `json:"tags"`
 }
