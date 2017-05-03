@@ -155,7 +155,8 @@ func (client Client) CaptureMessagef(format string, a ...interface{}) (result st
 func (client Client) CaptureGlogEvent(ev glog.Event) {
 	if err := client.Capture(fromGlogEvent(ev)); err != nil {
 		// Don't use glog, or we'll just end up in an infinite loop
-		log.Printf("An error occurred while attempting to send an error to Sentry:\n%v", err)
+		log.Printf("Error sending error to Sentry:\n%v for glog event with message: %s, data: %v",
+			err, string(ev.Message), ev.Data)
 	}
 }
 
