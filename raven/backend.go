@@ -118,7 +118,7 @@ func fromGlogEvent(e glog.Event) *Event {
 	for _, d := range e.Data {
 		switch t := d.(type) {
 		case altDsn:
-			eve.TargetDsn = d.(string)
+			eve.TargetDsn = string(d.(altDsn))
 		case *http.Request:
 			eve.Http = NewHttp(t)
 		case map[string]interface{}:
