@@ -47,9 +47,9 @@ func CaptureErrors(project, dsn string, comm <-chan glog.Event) {
 // It sets up a connection to sentry for each of the given dsn URIs.
 //
 // To tag an event with a dsn:
-//     glog.Error("bad thing happened", raven.AltDsn(YOUR_DSN))
+//     glog.Error("bad thing happened", glog.Data(raven.AltDsn(YOUR_DSN)))
 //
-// If the dsn of an event is not specificed or is not equal to any of the
+// If the dsn of an event is not specified or is not equal to any of the
 // dsns arg, the dsn target will be assumed to be the first dsn in the dsns list.
 func CaptureErrorsAltDsn(project string, dsns []string, comm <-chan glog.Event) {
 	if len(dsns) == 0 {
@@ -106,7 +106,7 @@ func fromGlogEvent(e glog.Event) *Event {
 
 	eve := &Event{
 		Project:    projectName,
-		Level:      e.Severity,
+		Level:      strings.ToLower(e.Severity),
 		Message:    msg,
 		ServerName: hostname,
 		Extra:      map[string]interface{}{"FullMessage": fullMessage},
