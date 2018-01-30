@@ -10,25 +10,23 @@ type StackTrace struct {
 }
 
 type StackFrame struct {
+	Filename string `json:"filename"`
 	Function string `json:"function"`
 	LineNo   string `json:"lineno"`
 }
 
 func Build(stack []uintptr) StackTrace {
-	var ravenStackTrace = make([]StackFrame, len(stack))
-	for i, ptr := range stack {
-		var (
-			f        = runtime.FuncForPC(ptr)
-			funcname = "???"
-			lineno   int
-		)
-		if f != nil {
-			funcname = f.Name()
-			_, lineno = f.FileLine(ptr)
-		}
-		ravenStackTrace[i] = StackFrame{
-			Function: funcname,
-			LineNo:   strconv.Itoa(lineno),
+	var ravenStackTrace = make([]StackFrame, 0, len(stack))
+	frames := runtime.CallersFrames(stack)
+	for {
+		frame, more := frames.Next()
+		ravenStackTrace = append(ravenStackTrace, StackFrame{
+			Filename: frame.File,
+			Function: frame.Function,
+			LineNo:   strconv.Itoa(frame.Line),
+		})
+		if !more {
+			break
 		}
 	}
 	return StackTrace{ravenStackTrace}
