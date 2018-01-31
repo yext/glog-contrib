@@ -25,4 +25,9 @@ func TestBuild(t *testing.T) {
 		}
 		t.Error("Final line of stacktrace was not as expected")
 	}
+	for _, frame := range trace.Frames {
+		if frame.AbsPath == frame.Filename {
+			t.Errorf("Did not expect absolute path to match filename: %+v", frame)
+		}
+	}
 }

@@ -119,6 +119,8 @@ func fromGlogEvent(e glog.Event) *Event {
 		switch t := d.(type) {
 		case altDsn:
 			eve.TargetDsn = string(d.(altDsn))
+		case fingerprint:
+			eve.Fingerprint = []string(d.(fingerprint))
 		case *http.Request:
 			eve.Http = NewHttp(t)
 		case map[string]interface{}:

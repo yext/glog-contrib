@@ -61,18 +61,19 @@ type Http struct {
 }
 
 type Event struct {
-	EventId    string                 `json:"event_id"`
-	Project    string                 `json:"project"`
-	Message    string                 `json:"message"`
-	Timestamp  string                 `json:"timestamp"`
-	Level      string                 `json:"level"`
-	Logger     string                 `json:"logger"`
-	ServerName string                 `json:"server_name"`
-	StackTrace stacktrace.StackTrace  `json:"stacktrace"`
-	Http       *Http                  `json:"request"`
-	TargetDsn  string                 `json:"targetDsn"`
-	Extra      map[string]interface{} `json:"extra"`
-	Tags       map[string]string      `json:"tags"`
+	EventId     string                 `json:"event_id"`
+	Project     string                 `json:"project"`
+	Message     string                 `json:"message"`
+	Timestamp   string                 `json:"timestamp"`
+	Level       string                 `json:"level"`
+	Logger      string                 `json:"logger"`
+	ServerName  string                 `json:"server_name"`
+	StackTrace  stacktrace.StackTrace  `json:"stacktrace"`
+	Http        *Http                  `json:"request"`
+	TargetDsn   string                 `json:"targetDsn"`
+	Extra       map[string]interface{} `json:"extra"`
+	Tags        map[string]string      `json:"tags"`
+	Fingerprint []string               `json:"fingerprint,omitempty"`
 }
 
 type sentryResponse struct {
