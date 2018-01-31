@@ -29,5 +29,10 @@ func Build(stack []uintptr) StackTrace {
 			break
 		}
 	}
+	// Reverse the stack trace to fit with Sentry's expectations.
+	for i, j := 0, len(ravenStackTrace)-1; i < j; i, j = i+1, j-1 {
+		ravenStackTrace[i], ravenStackTrace[j] = ravenStackTrace[j], ravenStackTrace[i]
+	}
+
 	return StackTrace{ravenStackTrace}
 }
