@@ -81,7 +81,7 @@ type sentryResponse struct {
 }
 
 // Default sentry DSN from https://github.com/getsentry/sentry-java/blob/4b810150969108429bbb36d28227cb128b986aa0/sentry/src/main/java/io/sentry/dsn/Dsn.java#L21
-const DefaultSentryDSN = "noop://localhost?async=false"
+const DefaultSentryDSN = "noop://user:password@localhost:0/0"
 
 // Template for the X-Sentry-Auth header
 const xSentryAuthTemplate = "Sentry sentry_version=2.0, sentry_client=raven-go/0.1, sentry_timestamp=%v, sentry_key=%v"
