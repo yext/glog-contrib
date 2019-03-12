@@ -80,7 +80,7 @@ type sentryResponse struct {
 	ResultId string `json:"result_id"`
 }
 
-// Default sentry DSN from https://github.com/getsentry/sentry-java/blob/4b810150969108429bbb36d28227cb128b986aa0/sentry/src/main/java/io/sentry/dsn/Dsn.java#L21
+// Default sentry DSN from https://github.com/getsentry/sentry-java/blob/af5196bd2a2531d4a3a74b51aeb64319c82c4ef6/sentry/src/main/java/io/sentry/dsn/Dsn.java#L20
 const DefaultSentryDSN = "noop://user:password@localhost:0/0"
 
 // Template for the X-Sentry-Auth header
