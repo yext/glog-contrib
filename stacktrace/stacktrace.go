@@ -1,6 +1,7 @@
 package stacktrace
 
 import (
+	"fmt"
 	"path/filepath"
 	"runtime"
 	"strconv"
@@ -51,4 +52,21 @@ func Build(stack []uintptr) StackTrace {
 	}
 
 	return StackTrace{ravenStackTrace}
+}
+
+// Inner returns the innermost stack frame.
+func (st StackTrace) Inner() StackFrame {
+	if len(st.Frames) == 0 {
+		return StackFrame{}
+	}
+	return st.Frames[len(st.Frames)-1]
+}
+
+// Strings returns a list of string descriptions of each stack frame.
+func (st StackTrace) Strings() []string {
+	var r = make([]string, len(st.Frames))
+	for i, f := range st.Frames {
+		r[i] = fmt.Sprintf("%s in %s at line %s", f.Filename, f.Function, f.LineNo)
+	}
+	return r
 }
