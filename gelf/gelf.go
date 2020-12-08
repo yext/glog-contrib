@@ -8,7 +8,8 @@ import (
 	"github.com/aphistic/golf"
 	"github.com/yext/glog"
 	"github.com/yext/glog-contrib/stacktrace"
-	"github.com/youtube/vitess/go/ratelimiter"
+
+	"golang.org/x/time/rate"
 )
 
 // Capture events and sends them to the gelf server.
@@ -30,7 +31,11 @@ func Capture(attrs map[string]interface{}, serverUri string, maxEventsPerSec int
 		logger.SetAttr(k, v)
 	}
 
-	rl := ratelimiter.NewRateLimiter(maxEventsPerSec, time.Second)
+	// Also use maxEventsPerSec as the burst size
+	var (
+		limit = rate.Every(time.Second/time.Duration(maxEventsPerSec))
+		rl    = rate.NewLimiter(limit, maxEventsPerSec)
+	)
 	for e := range eventCh {
 		if !rl.Allow() {
 			continue
