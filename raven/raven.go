@@ -125,6 +125,10 @@ func NewClient(dsn string) (client *Client, err error) {
 		m["job_name"] = "unknown"
 	}
 
+	if yextSite := os.Getenv("YEXT_SITE"); yextSite != "" {
+		m["environment"] = yextSite
+	}
+
 	return &Client{
 		URL:       u,
 		PublicKey: publicKey,
