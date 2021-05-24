@@ -39,7 +39,7 @@ import (
 	"time"
 
 	"github.com/yext/glog"
-	"github.com/yext/glog-contrib/stacktrace"
+	"github.com/yext/glog-contrib/raven/stacktrace"
 )
 
 type Client struct {
@@ -95,6 +95,13 @@ const iso8601 = "2006-01-02T15:04:05"
 // eg:
 //	http://abcd:efgh@sentry.example.com/sentry/project1
 func NewClient(dsn string) (client *Client, err error) {
+	// sentry-go supports a blank DSN as a noop host. Ensure that
+	// if a blank DSN is specified to raven that we treat it like
+	// the default DSN.
+	if dsn == "" {
+		dsn = DefaultSentryDSN
+	}
+
 	u, err := url.Parse(dsn)
 	if err != nil {
 		return nil, err

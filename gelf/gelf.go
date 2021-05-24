@@ -7,7 +7,7 @@ import (
 
 	"github.com/aphistic/golf"
 	"github.com/yext/glog"
-	"github.com/yext/glog-contrib/stacktrace"
+	"github.com/yext/glog-contrib/raven/stacktrace"
 
 	"golang.org/x/time/rate"
 )
@@ -33,7 +33,7 @@ func Capture(attrs map[string]interface{}, serverUri string, maxEventsPerSec int
 
 	// Also use maxEventsPerSec as the burst size
 	var (
-		limit = rate.Every(time.Second/time.Duration(maxEventsPerSec))
+		limit = rate.Every(time.Second / time.Duration(maxEventsPerSec))
 		rl    = rate.NewLimiter(limit, maxEventsPerSec)
 	)
 	for e := range eventCh {
