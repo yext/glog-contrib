@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/yext/glog-contrib/stacktrace"
+	"github.com/yext/glog-contrib/raven/stacktrace"
 )
 
 func TestBuild(t *testing.T) {

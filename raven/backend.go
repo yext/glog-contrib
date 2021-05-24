@@ -9,7 +9,7 @@ import (
 	"strings"
 
 	"github.com/yext/glog"
-	"github.com/yext/glog-contrib/stacktrace"
+	"github.com/yext/glog-contrib/raven/stacktrace"
 	"golang.org/x/xerrors"
 )
 

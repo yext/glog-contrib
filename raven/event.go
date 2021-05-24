@@ -8,7 +8,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/yext/glog-contrib/stacktrace"
+	"github.com/yext/glog-contrib/raven/stacktrace"
 )
 
 func NewEvent(req *http.Request, message string, depth int) *Event {
