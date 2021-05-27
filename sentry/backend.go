@@ -141,6 +141,7 @@ func FromGlogEvent(e glog.Event) (*sentry.Event, string) {
 	s.Logger = stacktrace.GopathRelativeFile(os.Args[0])
 
 	data := map[string]interface{}{}
+	sanitizedFormatString := ""
 	for _, d := range e.Data {
 		switch t := d.(type) {
 		case altDsn:
@@ -153,6 +154,11 @@ func FromGlogEvent(e glog.Event) (*sentry.Event, string) {
 			for k, v := range t {
 				data[k] = v
 			}
+		case glog.FormatStringArg:
+			// If we have a format string arg, then we can use it
+			// to make a rough approximation of the error's "type"
+			// by removing the format characters (like %s).
+			sanitizedFormatString = cleanupFormatString(t.Format)
 		case glog.ErrorArg:
 			// Prepend the Message with the innermost error message.
 			// This causes it to be used for the headline.
@@ -164,11 +170,20 @@ func FromGlogEvent(e glog.Event) (*sentry.Event, string) {
 			err := t.Error
 			for i := 0; i < maxErrorDepth && err != nil; i++ {
 				errTrace := stacktrace.ExtractStacktrace(err)
+				fullMsg := prependMessage(headline(err), err.Error())
+
+				// Split the message into parts before and after the colon (:),
+				// if one is present. This removes most unique identifiers from
+				// the type field of the exception.
+				msgType, msgValue := splitMessage(fullMsg)
 				s.Exception = append(s.Exception, sentry.Exception{
-					// Type is the primary issue title containing the error string
-					Type: prependMessage(headline(err), err.Error()),
-					// Value is the issue subtitle containing the method name/line
-					Value:      stacktrace.SourceFromStack(errTrace),
+					// Type is the bolded, primary issue title containing the primary component of the error string.
+					// it is utilized in Sentry's event-merge algorithm, so we attempt to remove any potentially
+					// unique components and move them over to the value field.
+					Type: msgType,
+					// Value is the issue subtitle containing any remaining components of the error string,
+					// and the method name/line in which this error was invoked
+					Value:      addExceptionSource(msgValue, errTrace),
 					Stacktrace: errTrace,
 				})
 				switch previous := err.(type) {
@@ -190,12 +205,27 @@ func FromGlogEvent(e glog.Event) (*sentry.Event, string) {
 	trace := stacktrace.ExtractFrames(e.StackTrace, nil)
 	if trace != nil {
 		// Add exception for top-level glog message, if we did not find any
-		// stacktrace data via ErrorArgs
+		// stacktrace data via ErrorArgs.
+		var msgType, msgValue string
+
+		// If a format string was passed to glog, use a sanitized version of it
+		// as the exception type, since we know with relative certainty that it
+		// will not contain any unique identifiers.
+		if sanitizedFormatString != "" {
+			msgType = sanitizedFormatString
+			_, msgValue = splitMessage(s.Message)
+		} else {
+			msgType, msgValue = splitMessage(s.Message)
+		}
+
 		s.Exception = append(s.Exception, sentry.Exception{
-			// Type is the primary issue title containing the error string
-			Type: cleanupMessage(s.Message),
-			// Value is the issue subtitle containing the method name/line
-			Value:      stacktrace.SourceFromStack(trace),
+			// Type is the primary issue title containing the primary component of the error string.
+			// it is utilized in Sentry's event-merge algorithm, so we attempt to remove any potentially
+			// unique components and move them over to the value field.
+			Type: msgType,
+			// Value is the issue subtitle containing any remaining components of the error string,
+			// and the method name/line in which this error was invoked
+			Value:      addExceptionSource(msgValue, trace),
 			Stacktrace: trace,
 		})
 	}

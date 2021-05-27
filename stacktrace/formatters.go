@@ -14,11 +14,5 @@ func SourceFromStack(s *sentry.Stacktrace) string {
 	}
 
 	f := s.Frames[len(s.Frames)-1]
-	filename := ""
-	if f.Filename != "" {
-		filename = " (" + GopathRelativeFile(f.Filename) + ")"
-	} else if f.AbsPath != "" {
-		filename = " (" + GopathRelativeFile(f.AbsPath) + ")"
-	}
-	return fmt.Sprintf("%s:%d%s", f.Function, f.Lineno, filename)
+	return fmt.Sprintf("%s:%d", f.Function, f.Lineno)
 }

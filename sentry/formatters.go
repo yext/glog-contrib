@@ -1,11 +1,20 @@
 package sentry
 
 import (
+	"regexp"
 	"strings"
+
+	"github.com/yext/glog-contrib/stacktrace"
 
 	"github.com/getsentry/sentry-go"
 	"golang.org/x/xerrors"
 )
+
+var formatStringRe *regexp.Regexp
+
+func init() {
+	formatStringRe = regexp.MustCompile(`%#?\+?\w+ ?`)
+}
 
 // headline returns a good Headline for this error.
 // Ideally, it returns a succinct summary that best conveys the error.
@@ -29,7 +38,6 @@ func headline(err error) string {
 	return err.Error()
 }
 
-
 // removeGlogPrefixFromMessage removes the glog date/level from the
 // raw byte string returned from glogEvent.Message
 func removeGlogPrefixFromMessage(msg []byte) string {
@@ -41,10 +49,45 @@ func removeGlogPrefixFromMessage(msg []byte) string {
 	return message
 }
 
-// cleanupMessage cleans up a message displayed as the top-line
-// Sentry error by splitting at the first newline.
-func cleanupMessage(msg string) string {
-	return strings.Split(strings.TrimSpace(msg), "\n")[0]
+// splitMessage cleans up a message displayed as the top-line
+// Sentry error by splitting at the first newline, and checking
+// for presence of a colon (:). It returns a string for anything
+// present before a colon, as well as a string for anything after it.
+func splitMessage(msg string) (string, string) {
+	firstLine := strings.Split(strings.TrimSpace(msg), "\n")[0]
+	parts := strings.SplitN(firstLine, ": ", 2)
+	if len(parts) == 2 {
+		return parts[0], parts[1]
+	} else {
+		return parts[0], ""
+	}
+}
+
+// addExceptionSource adds the source of the exception, if present,
+// to the string value provided. If the string value is non-empty,
+// it places the source in parentheses as long as the source exists.
+func addExceptionSource(value string, trace *sentry.Stacktrace) string {
+	source := stacktrace.SourceFromStack(trace)
+
+	if value == "" {
+		return source
+	} else if source != "" {
+		return value + " (" + source + ")"
+	} else {
+		return value
+	}
+}
+
+// cleanupFormatString takes in a message with printf formatter characters
+// (e.g. "error performing action %s: %s") and strips the percent characters,
+// also cleaning up whitespace and trailing colons.
+func cleanupFormatString(format string) string {
+	format = formatStringRe.ReplaceAllString(format, "")
+	format = strings.TrimSpace(format)
+	format = strings.TrimSuffix(format, ":")
+	format = strings.TrimSpace(format)
+
+	return format
 }
 
 // prependMessage prepends the given possiblePrefix to an
