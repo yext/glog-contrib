@@ -43,9 +43,10 @@ func init() {
 // Given Sentry DSNs and client options (DSN should not be specified in opts),
 // constructs individual Sentry Client's for each DSN. The glog.Event channel
 // should be provided by running glog.RegisterBackend(). For example:
-//  sentry.CaptureErrors(
-//  	"projectName",
-//  	[]string{"https://primaryDsn", "https://optionalSecondaryDsn", ...},
+//
+//	 sentry.CaptureErrors(
+//	 	"projectName",
+//	 	[]string{"https://primaryDsn", "https://optionalSecondaryDsn", ...},
 //		sentrygo.ClientOptions{
 //			Release: "release",
 //			Environment: "prod",
@@ -56,7 +57,8 @@ func init() {
 // the first provided DSN will be used, unless a sentry.AltDsn is
 // tagged on the glog event, in which case the specified client
 // for that DSN will be used:
-//   glog.Error("error for secondary DSN", sentry.AltDsn("https://optionalSecondaryDsn"))
+//
+//	glog.Error("error for secondary DSN", sentry.AltDsn("https://optionalSecondaryDsn"))
 func CaptureErrors(project string, dsns []string, opts sentry.ClientOptions, comm <-chan glog.Event) {
 	// If no DSNs specified, panic (we can't invoke glog)
 	if len(dsns) == 0 {
@@ -133,12 +135,19 @@ func FromGlogEvent(e glog.Event) (*sentry.Event, string) {
 	targetDsn := ""
 
 	s := sentry.NewEvent()
+	// The user may have set a scope in their program which we'd like to respect when
+	// sending an event to sentry. Apply the scope to the event before capture as the hubs
+	// we use to route to the correct team DSN are disconnected from the hub created within
+	// the sentry package.
+	s = sentry.CurrentHub().Scope().ApplyToEvent(s, nil)
 	s.Message = removeGlogPrefixFromMessage(e.Message)
 	s.Level = buildLevel(e.Severity)
 	s.ServerName = hostname
-
-	s.Extra = map[string]interface{}{}
 	s.Logger = stacktrace.GopathRelativeFile(os.Args[0])
+
+	if s.Extra == nil {
+		s.Extra = map[string]interface{}{}
+	}
 
 	data := map[string]interface{}{}
 	sanitizedFormatString := ""

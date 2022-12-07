@@ -107,6 +107,71 @@ func TestGlogSimpleEvent(t *testing.T) {
 	assert.True(t, fr.InApp, "inapp flag true")
 }
 
+func TestGlogEventWithScope(t *testing.T) {
+	// TestGlogEventWithScope that the resulting sentrygo.Event has the expected context added from
+	// the scope.
+	t.Run("context", func(t *testing.T) {
+		additionalContext := map[string]any{
+			"string": "value",
+			"int":    1,
+			"float":  1.1,
+			"nested": map[string]any{
+				"value": true,
+			},
+		}
+		sentrygo.ConfigureScope(func(scope *sentrygo.Scope) {
+			scope.SetContexts(additionalContext)
+		})
+
+		ready := make(chan interface{})
+		done := make(chan *sentrygo.Event)
+		go setup(ready, done, 1)
+
+		<-ready
+		glog.Error("test message")
+		e := <-done
+
+		assert.Equal(t, additionalContext, e.Contexts)
+	})
+
+	t.Run("tag", func(t *testing.T) {
+		sentrygo.ConfigureScope(func(scope *sentrygo.Scope) {
+			scope.SetTag("key", "value")
+		})
+
+		ready := make(chan interface{})
+		done := make(chan *sentrygo.Event)
+		go setup(ready, done, 1)
+
+		<-ready
+		glog.Error("test message")
+		e := <-done
+
+		assert.Equal(t, map[string]string{"key": "value"}, e.Tags)
+	})
+
+	t.Run("uses current scope", func(t *testing.T) {
+		sentrygo.ConfigureScope(func(scope *sentrygo.Scope) {
+			scope.SetTag("key", "old")
+		})
+
+		sentrygo.ConfigureScope(func(scope *sentrygo.Scope) {
+			scope.SetTag("key", "new")
+		})
+
+		ready := make(chan interface{})
+		done := make(chan *sentrygo.Event)
+		go setup(ready, done, 1)
+
+		<-ready
+		glog.Error("test message")
+		e := <-done
+
+		assert.Equal(t, map[string]string{"key": "new"}, e.Tags)
+
+	})
+}
+
 func TestGlogErrorfEvent(t *testing.T) {
 	methodName := "TestGlogErrorfEvent" // this should stay in sync with the name of the method
 
