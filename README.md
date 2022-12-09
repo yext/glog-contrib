@@ -38,3 +38,8 @@ for that DSN will be used:
 glog.Error("error for secondary DSN", sentry.AltDsn("https://optionalSecondaryDsn"))
 ```
 
+## Installation
+glog-contrib is released as a Go module. To download the latest version, run
+```
+go get github.com/yext/glog-contrib
+```
