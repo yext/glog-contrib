@@ -128,18 +128,30 @@ func buildFingerprint(exceptions []sentry.Exception) []string {
 	return r
 }
 
+func getScope(e glog.Event) *sentry.Scope {
+	hub := sentry.CurrentHub().Scope()
+	for _, d := range e.Data {
+		switch t := d.(type) {
+		case sentryScope:
+			hub = t
+		}
+	}
+	return hub
+}
+
 // FromGlogEvent processes a glog event and generates a corresponding Sentry event.
 // This includes building the stacktrace, cleaning up the error title and subtitle,
 // and identifying whether any TargetDSN or Fingerprint overrides were set.
 func FromGlogEvent(e glog.Event) (*sentry.Event, string) {
 	targetDsn := ""
+	scope := getScope(e)
 
 	s := sentry.NewEvent()
 	// The user may have set a scope in their program which we'd like to respect when
 	// sending an event to sentry. Apply the scope to the event before capture as the hubs
 	// we use to route to the correct team DSN are disconnected from the hub created within
 	// the sentry package.
-	s = sentry.CurrentHub().Scope().ApplyToEvent(s, nil)
+	s = scope.ApplyToEvent(s, nil)
 	s.Message = removeGlogPrefixFromMessage(e.Message)
 	s.Level = buildLevel(e.Severity)
 	s.ServerName = hostname
